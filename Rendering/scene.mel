@@ -1,0 +1,11 @@
+﻿global proc SetJointDisplayScale(float $jointScale) 
+{
+    jointDisplayScale $jointScale;
+}
+
+global proc SetViewportSettings() 
+{
+    setAttr "hardwareRenderingGlobals.transparencyAlgorithm" 5;
+    modelEditor - edit - displayAppearance smoothShaded - activeOnly false modelPanel4;
+    modelEditor - e - displayTextures true modelPanel4;
+}
