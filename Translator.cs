@@ -2,11 +2,12 @@
 using Autodesk.Maya.OpenMayaAnim;
 using MdxLib.Model;
 using MdxLib.ModelFormats;
-using wc3ToMaya;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using wc3ToMaya.Rendering;
+using System.Globalization;
+using System.Threading;
 
 [assembly: MPxFileTranslatorClass(typeof(wc3ToMaya.MyFormatTranslator), "Warcraft MDX", null, null, null)]
 
@@ -16,18 +17,25 @@ namespace wc3ToMaya
     {
         public override void reader(MFileObject file, string optionsString, FileAccessMode mode)
         {
+            CultureInfo originalCulture = Thread.CurrentThread.CurrentCulture;
             try
             {
+                Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
                 string filePath = file.fullName;
 
                 CModel model = new CModel();
-                
+
                 using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 {
                     new CMdx().Load(filePath, (Stream)fileStream, model);
                     Dictionary<INode, MFnIkJoint> nodeToJoint = Rig.CreateAndSaveData(model);
-                    Mesh.Create(model, Path.GetFileNameWithoutExtension(filePath));
-                    
+                    Mesh.Create(model, Path.GetFileNameWithoutExtension(filePath), nodeToJoint);
+                    Rig.RemoveTempPrefix(nodeToJoint);
+                    //var layers = Animator.MarkSequences(model);
+                    //Animator.Animate(model, nodeToJoint, layers);
+                    //Animator.ImportSequence(model, 0, nodeToJoint);
+
+
                     Scene.ReapplyColorSpaceRules();
                     Scene.SetViewportSettings();
                 }
@@ -37,6 +45,10 @@ namespace wc3ToMaya
                 MGlobal.displayInfo($"Error while importing Warcraft 3 File: {ex.Message}");
                 MGlobal.displayInfo($"Source: {ex.Source}");
                 MGlobal.displayInfo($"Stack Trace: {ex.StackTrace}");
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = originalCulture;
             }
         }
 

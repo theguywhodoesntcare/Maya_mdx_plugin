@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Animates\Animator.cs" />
     <Compile Include="ExtContent\BlpCLIConverter.cs" />
     <Compile Include="ExtContent\AssetsDir.cs" />
     <Compile Include="Translator.cs" />
@@ -63,6 +64,7 @@
   <ItemGroup>
     <None Include="Rendering\scene.mel" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>copy /Y "$(TargetDir)wc3ToMaya.dll" "C:\Program Files\Autodesk\Maya2024\bin\plug-ins\wc3ToMaya.nll.dll"

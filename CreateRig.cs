@@ -9,6 +9,9 @@ namespace wc3ToMaya
     internal class Rig
     {
         readonly static string jointScale = "0.1";
+
+        readonly static string tempPrefix = "_TEMPNAME_";
+
         internal static Dictionary<INode, MFnIkJoint> CreateAndSaveData(CModel model)
         {
             Dictionary<INode, List<INode>> parentToChildren = new Dictionary<INode, List<INode>>();
@@ -79,7 +82,7 @@ namespace wc3ToMaya
         {
             MFnIkJoint joint = new MFnIkJoint();
             MObject jointObj = joint.create(MObject.kNullObj);
-            joint.setName(node.Name);
+            joint.setName($"{tempPrefix}{node.Name}");
 
             CVector3 pivotPoint = node.PivotPoint; // world position
 
@@ -87,6 +90,14 @@ namespace wc3ToMaya
             joint.setTranslation(jointPos, MSpace.Space.kTransform);
 
             return joint;
+        }
+
+        internal static void RemoveTempPrefix(Dictionary<INode, MFnIkJoint> nodeToJoint)
+        {
+            foreach (var pair in nodeToJoint)
+            {
+                pair.Value.setName(pair.Value.name.Replace(tempPrefix, ""));
+            }
         }
     }
 }

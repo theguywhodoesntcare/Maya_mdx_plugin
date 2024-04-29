@@ -1,12 +1,16 @@
 ﻿using Autodesk.Maya.OpenMaya;
+using Autodesk.Maya.OpenMayaAnim;
 using MdxLib.Model;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using wc3ToMaya.Rendering;
 
 namespace wc3ToMaya
 {
     internal class Mesh
     {
-        internal static void Create(CModel model, string name)
+        internal static void Create(CModel model, string name, Dictionary<INode, MFnIkJoint> nodeToJoint)
         {
             var textureDict = TextureFiles.CreateNodes(model);
             foreach (CGeoset geoset in model.Geosets)
@@ -17,6 +21,21 @@ namespace wc3ToMaya
                 MIntArray polygonCounts = new MIntArray();
                 MIntArray polygonConnects = new MIntArray();
 
+                //normals
+                MIntArray vertexList = new MIntArray();
+                MVectorArray normals = new MVectorArray();
+                
+                Dictionary<int, List<string>> matrices = new Dictionary<int, List<string>>();
+                
+                List<string> joints = new List<string>();
+                foreach (var group in geoset.Groups)
+                {
+                    foreach (var node in group.Nodes)
+                    {
+                        joints.Add(nodeToJoint[node.Node.Node].name);
+                    }
+                }
+
                 foreach (CGeosetVertex vertex in geoset.Vertices)
                 {
                     points.append(vertex.Position.ToMPoint());
@@ -24,6 +43,21 @@ namespace wc3ToMaya
                     uArray.append(vertex.TexturePosition.X);
                     // Mirror V
                     vArray.append(1 - vertex.TexturePosition.Y);
+                    
+                    // v group
+                    CGeosetGroup group = vertex.Group.Object;
+
+                    List<string> names = new List<string>();
+                    foreach (var node in group.Nodes)
+                    {
+                        names.Add(nodeToJoint[node.Node.Node].name);
+                        //MGlobal.displayInfo($"Vertex {vertex.ObjectId}: {node.Node.Node.Name}");
+                    }
+                    matrices.Add(vertex.ObjectId, names);
+
+                    //normals
+                    vertexList.Add(vertex.ObjectId);
+                    normals.Add(vertex.Normal.ToMVector(false));
                 }
 
                 foreach (CGeosetFace face in geoset.Faces)
@@ -39,9 +73,12 @@ namespace wc3ToMaya
                 meshFn.setUVs(uArray, vArray);
                 meshFn.assignUVs(polygonCounts, polygonConnects);
 
+                SetNormals(meshFn, vertexList, normals);
+
                 SetPivotToGeometricCenter(meshFn);
 
                 // rename
+                string meshName = $"{name}_{model.Name}_{geoset.ObjectId}_shape";
                 meshFn.setName($"{name}_{model.Name}_{geoset.ObjectId}_shape");
 
                 // rename polySurface
@@ -49,9 +86,17 @@ namespace wc3ToMaya
                 MFnDagNode dagNodeFn = new MFnDagNode(parent);
                 dagNodeFn.setName($"{name}_{model.Name}_{geoset.ObjectId}_polySurface");
 
+                //CreateShapeOrig(meshFn);
+                CreateSkinClusterMEL(meshName, matrices, joints);
+
                 MatCreator.СreateMat(geoset.Material.Object, meshFn, textureDict);
             }
         }
+        static void SetNormals(MFnMesh meshFn, MIntArray verts, MVectorArray normals)
+        {
+            meshFn.setVertexNormals(normals, verts);
+        }
+
         static void SetPivotToGeometricCenter(MFnMesh meshFn)
         {
             // get center
@@ -67,6 +112,52 @@ namespace wc3ToMaya
             {
                 rPivot.child(i).setDouble(center[i]);
                 sPivot.child(i).setDouble(center[i]);
+            }
+        }
+
+        static void CreateSkinClusterMEL(string meshName, Dictionary<int, List<string>> matrices, List<string> joints)
+        {
+            var sb = new StringBuilder();
+            foreach (var jointName in joints)
+            {
+                sb.AppendFormat("{0} ", jointName);
+            }
+            sb.Length--;
+
+            var clusterName = $"{meshName}SkinCluster";
+
+            var melScript = new string[]
+            {
+                "select -d;",
+                $"select -r {sb} {meshName};",
+                $"skinCluster -n {clusterName} -dr 4.5 -tsb;", // Create skinCluster
+            };
+            foreach (var command in melScript)
+            {
+                MGlobal.executeCommand(command);
+            }
+
+            foreach (var pair in matrices)
+            {
+                // Select vertex
+                MGlobal.executeCommand($"select -r {meshName}.vtx[{pair.Key}];");
+
+                // Get joints for vertex
+                var influenceJoints = pair.Value;
+
+                // Set joints as influence objects, dividing weight equally
+                var weight = 1f / influenceJoints.Count;
+                var weightStr = weight.ToString(CultureInfo.InvariantCulture);
+
+                sb.Clear(); // Clear for reuse
+
+                foreach (var joint in influenceJoints)
+                {
+                    sb.AppendFormat("-transformValue {0} {1} ", joint, weightStr); // weight matrix
+                }
+                sb.Length--;
+
+                MGlobal.executeCommand($"skinPercent {sb} -normalize on {clusterName};");
             }
         }
     }
