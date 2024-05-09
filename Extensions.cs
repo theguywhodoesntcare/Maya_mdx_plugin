@@ -1,6 +1,7 @@
 ﻿using Autodesk.Maya.OpenMaya;
 using MdxLib.Primitives;
 using System;
+using System.Text.RegularExpressions;
 
 namespace wc3ToMaya
 {
@@ -11,6 +12,31 @@ namespace wc3ToMaya
             return rad * 180.0 / Math.PI;
         }
     }
+    public static class StringExtensions
+    {
+        public static string Standardize(this string s)
+        {
+            // Many names in Maya only support letters, numbers, and underscores. Some strings cannot start with a number
+
+            string newS = s;
+            if (char.IsDigit(newS[0]))
+            {
+                newS = newS.Insert(0, "i");
+            }
+
+            Regex rgx = new Regex("[^a-zA-Z0-9_]");
+            newS = rgx.Replace(newS, "");
+
+            if (string.IsNullOrEmpty(newS))
+            {
+                newS = "InvalidName";
+            }
+
+            return newS;
+        }
+    }
+
+
     public static class CVector3Extensions
     {
         private static readonly double scaleFactor = 30; // The vector will be reduced by the specified amount (if need)
@@ -69,5 +95,4 @@ namespace wc3ToMaya
             return eulerRot;
         }
     }
-
 }

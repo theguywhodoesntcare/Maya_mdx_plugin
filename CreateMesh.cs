@@ -10,8 +10,10 @@ namespace wc3ToMaya
 {
     internal class Mesh
     {
-        internal static void Create(CModel model, string name, Dictionary<INode, MFnIkJoint> nodeToJoint)
+        internal static string Create(CModel model, string name, Dictionary<INode, MFnIkJoint> nodeToJoint)
         {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("select -r ");
             var textureDict = TextureFiles.CreateNodes(model);
             foreach (CGeoset geoset in model.Geosets)
             {
@@ -78,19 +80,27 @@ namespace wc3ToMaya
                 SetPivotToGeometricCenter(meshFn);
 
                 // rename
-                string meshName = $"{name}_{model.Name}_{geoset.ObjectId}_shape";
-                meshFn.setName($"{name}_{model.Name}_{geoset.ObjectId}_shape");
+                string meshNameBase = $"{name}_{model.Name}_{geoset.ObjectId}";
+
+                while (IsExist(meshNameBase))
+                {
+                    meshNameBase = meshNameBase + "_copy";
+                }
+                string meshName = $"{meshNameBase}_shape";
+                meshFn.setName(meshName.Standardize());
 
                 // rename polySurface
                 MObject parent = meshFn.parent(0);
                 MFnDagNode dagNodeFn = new MFnDagNode(parent);
-                dagNodeFn.setName($"{name}_{model.Name}_{geoset.ObjectId}_polySurface");
-
+                string psName = $"{meshNameBase}_polySurface";
+                dagNodeFn.setName(psName);
+                sb.Append(psName);
                 //CreateShapeOrig(meshFn);
-                CreateSkinClusterMEL(meshName, matrices, joints);
+                CreateSkinClusterMEL(psName, matrices, joints);
 
                 MatCreator.СreateMat(geoset.Material.Object, meshFn, textureDict);
             }
+            return sb.ToString();
         }
         static void SetNormals(MFnMesh meshFn, MIntArray verts, MVectorArray normals)
         {
@@ -117,6 +127,7 @@ namespace wc3ToMaya
 
         static void CreateSkinClusterMEL(string meshName, Dictionary<int, List<string>> matrices, List<string> joints)
         {
+            MGlobal.executeCommand($"select -clear;");
             var sb = new StringBuilder();
             foreach (var jointName in joints)
             {
@@ -159,6 +170,13 @@ namespace wc3ToMaya
 
                 MGlobal.executeCommand($"skinPercent {sb} -normalize on {clusterName};");
             }
+        }
+        public static bool IsExist(string meshName)
+        {
+            string melCommand = $"objExists \"{meshName}_shape\"; objExists \"{meshName}_polySurface\"";
+            MIntArray result = new MIntArray();
+            MGlobal.executeCommand(melCommand, result);
+            return result[0] == 1 || result[0] == 1;
         }
     }
 }

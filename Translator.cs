@@ -8,6 +8,7 @@ using System.IO;
 using wc3ToMaya.Rendering;
 using System.Globalization;
 using System.Threading;
+using wc3ToMaya.Animates;
 
 [assembly: MPxFileTranslatorClass(typeof(wc3ToMaya.MyFormatTranslator), "Warcraft MDX", null, null, null)]
 
@@ -29,13 +30,22 @@ namespace wc3ToMaya
                 {
                     new CMdx().Load(filePath, (Stream)fileStream, model);
                     Dictionary<INode, MFnIkJoint> nodeToJoint = Rig.CreateAndSaveData(model);
-                    Mesh.Create(model, Path.GetFileNameWithoutExtension(filePath), nodeToJoint);
-                    Rig.RemoveTempPrefix(nodeToJoint);
+                    string selector = Mesh.Create(model, Path.GetFileNameWithoutExtension(filePath), nodeToJoint);
+
                     //var layers = Animator.MarkSequences(model);
                     //Animator.Animate(model, nodeToJoint, layers);
-                    //Animator.ImportSequence(model, 0, nodeToJoint);
+                    string composition = Animator.CreateComposition(model, Path.GetFileNameWithoutExtension(filePath));
 
+                    //Animator.ImportSequence(model, 9, nodeToJoint, composition);
+                    //timeEditorMEL.FlipState();
+                    //Animator.ImportSequence(model, 2, nodeToJoint, composition);
+                    //timeEditorMEL.FlipState();
+                    //Animator.ImportSequence(model, 5, nodeToJoint, composition);
+                    //timeEditorMEL.FlipState();
+                    //Animator.ImportSequence(model, 6, nodeToJoint, composition);
+                    Animator.ImportSequences(model, nodeToJoint, composition);
 
+                    Rig.RemoveTempPrefix(nodeToJoint);
                     Scene.ReapplyColorSpaceRules();
                     Scene.SetViewportSettings();
                 }
@@ -49,6 +59,7 @@ namespace wc3ToMaya
             finally
             {
                 Thread.CurrentThread.CurrentCulture = originalCulture;
+                timeEditorMEL.Unfreeze();
             }
         }
 
