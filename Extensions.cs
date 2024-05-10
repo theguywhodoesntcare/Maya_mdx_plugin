@@ -90,7 +90,7 @@ namespace wc3ToMaya
         {
             // Warcraft 3 CVector4 to Maya MEulerRotation
 
-            MEulerRotation eulerRot = vector.ToMQuaternion().asEulerRotation;
+            MEulerRotation eulerRot = vector.ToMQuaternion().normalizeIt().asEulerRotation;
             eulerRot.setValue(eulerRot.x.ToDeg(), eulerRot.y.ToDeg(), eulerRot.z.ToDeg());
             return eulerRot;
         }

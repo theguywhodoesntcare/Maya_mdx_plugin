@@ -95,6 +95,7 @@ namespace wc3ToMaya
                 string psName = $"{meshNameBase}_polySurface";
                 dagNodeFn.setName(psName);
                 sb.Append(psName);
+                sb.Append(" ");
                 //CreateShapeOrig(meshFn);
                 CreateSkinClusterMEL(psName, matrices, joints);
 

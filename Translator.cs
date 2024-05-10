@@ -43,7 +43,7 @@ namespace wc3ToMaya
                     //Animator.ImportSequence(model, 5, nodeToJoint, composition);
                     //timeEditorMEL.FlipState();
                     //Animator.ImportSequence(model, 6, nodeToJoint, composition);
-                    Animator.ImportSequences(model, nodeToJoint, composition);
+                    Animator.ImportSequences(model, nodeToJoint, composition, selector);
 
                     Rig.RemoveTempPrefix(nodeToJoint);
                     Scene.ReapplyColorSpaceRules();
@@ -55,11 +55,11 @@ namespace wc3ToMaya
                 MGlobal.displayInfo($"Error while importing Warcraft 3 File: {ex.Message}");
                 MGlobal.displayInfo($"Source: {ex.Source}");
                 MGlobal.displayInfo($"Stack Trace: {ex.StackTrace}");
+                MGlobal.executeCommandOnIdle("ScriptEditor;");
             }
             finally
             {
                 Thread.CurrentThread.CurrentCulture = originalCulture;
-                timeEditorMEL.Unfreeze();
             }
         }
 

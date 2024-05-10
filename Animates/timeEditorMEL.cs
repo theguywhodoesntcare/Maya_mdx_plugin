@@ -16,11 +16,16 @@ namespace wc3ToMaya.Animates
 
         internal static void Unfreeze()
         {
-            // doesnt work
-            // timeeditor still freezed after end of import
-
-            FlipState();
-            FlipState();
+            // It must be execute after all
+            MGlobal.executeCommandOnIdle("TimeEditorSceneAuthoringToggle;");
+        }
+        internal static void SetSettings(string composition, int start, int duration)
+        {
+            string command = $"TimeEditorSceneAuthoringToggle; timeEditorTracks -resetSolo;" +
+                $"timeEditorTracks -e -trackSolo true -trackIndex 0 {composition};" +
+                $"playbackOptions -min {start} -max {duration + start};" +
+                "playButtonForward;";
+            MGlobal.executeCommandOnIdle(command);
         }
     }
 }

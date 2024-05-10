@@ -1,5 +1,5 @@
 # Autodesk Maya MDX Plugin
-Plugin for Autodesk Maya, able to import Warcraft 3 MDX800 (classic) models. Magos' MdxLib using as parser. Currently only supports mesh import, rig hierarchy (without skin), and texture loading. No animation.
+Plugin for Autodesk Maya, using .NET API and MEL API, able to import Warcraft 3 MDX800 (classic) models. Magos' MdxLib using as parser. Currently supports mesh import, rig, joint animations, and texture loading.
 
 ![](images/arthasillidan.png)
 
@@ -18,7 +18,9 @@ Use File -> Import -> Warcraft MDX option.
 
 ![](images/demongate.png)
 
-Currently only supports mesh import, rig hierarchy (without skin), and texture loading (if the appropriate global variables are set in steps 3 and 4). 
+Currently supports mesh data (vertices, faces, normals, uv, skin data), rig data (bones and helpers presented as joints, rig hierarchy), animations data (translate, rotate and scale of joints).
+
+Other types of nodes except for bones and helpers are not supported. Geoset animations, material animations, cameras and lights are also not supported; all this is ignored.
 
 The plugin automatically creates a Lambert shader for single-layer materials, and a Layered shader for multi-layer materials.
 
@@ -27,3 +29,10 @@ Textures with a path to the file are supported; among procedural/dynamic texture
 Team Color is implemented as a Layered shader, with a custom color on the second layer.
 
 ![Team Color](images/paladin.gif)
+
+# Known Issues
+
+- Enabled *Echo All Commands* option in the Script Editor can slow import process, since plugin uses a huge number of MEL commands (almost everything related to rigging, skinning and animations).
+- Due to use of Euler angles in rotation animations, gimbal locks are possible. *Quite often actually.*
+- Plugin imports animations with default *Bezier* controller, OR with a *Linear* controller if it is used in Warcraft model. 3DSMax TCB controller (the most common case in Blizzard models) is not supported in Maya. *InTan and OutTan values are ignoring.*
+- Very rarely, a bug is possible when an incorrect texture file is applied to mesh. Solution: reimport model.
