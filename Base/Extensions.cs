@@ -36,10 +36,10 @@ namespace wc3ToMaya
         }
     }
 
-
     public static class CVector3Extensions
     {
         private static readonly double scaleFactor = 30; // The vector will be reduced by the specified amount (if need)
+        
         public static MVector ToMVector(this CVector3 vector, bool needScaling = true)
         {            
             // Warcraft 3 CVector3 to Maya MVector

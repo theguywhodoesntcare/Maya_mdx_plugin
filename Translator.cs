@@ -28,24 +28,15 @@ namespace wc3ToMaya
 
                 using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 {
-                    new CMdx().Load(filePath, (Stream)fileStream, model);
+                    new CMdx().Load(filePath, fileStream, model);
+
                     Dictionary<INode, MFnIkJoint> nodeToJoint = Rig.CreateAndSaveData(model);
                     string selector = Mesh.Create(model, Path.GetFileNameWithoutExtension(filePath), nodeToJoint);
-
-                    //var layers = Animator.MarkSequences(model);
-                    //Animator.Animate(model, nodeToJoint, layers);
                     string composition = Animator.CreateComposition(model, Path.GetFileNameWithoutExtension(filePath));
 
-                    //Animator.ImportSequence(model, 9, nodeToJoint, composition);
-                    //timeEditorMEL.FlipState();
-                    //Animator.ImportSequence(model, 2, nodeToJoint, composition);
-                    //timeEditorMEL.FlipState();
-                    //Animator.ImportSequence(model, 5, nodeToJoint, composition);
-                    //timeEditorMEL.FlipState();
-                    //Animator.ImportSequence(model, 6, nodeToJoint, composition);
                     Animator.ImportSequences(model, nodeToJoint, composition, selector);
-
                     Rig.RemoveTempPrefix(nodeToJoint);
+
                     Scene.ReapplyColorSpaceRules();
                     Scene.SetViewportSettings();
                 }

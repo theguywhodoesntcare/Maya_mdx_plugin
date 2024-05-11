@@ -59,6 +59,5 @@ namespace wc3ToMaya
             }
             return cliAppPath;
         }
-
     }
 }

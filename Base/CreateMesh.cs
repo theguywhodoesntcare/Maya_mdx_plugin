@@ -14,6 +14,7 @@ namespace wc3ToMaya
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("select -r ");
+
             var textureDict = TextureFiles.CreateNodes(model);
             foreach (CGeoset geoset in model.Geosets)
             {
@@ -82,7 +83,7 @@ namespace wc3ToMaya
                 // rename
                 string meshNameBase = $"{name}_{model.Name}_{geoset.ObjectId}";
 
-                while (IsExist(meshNameBase))
+                while (IsExist(meshNameBase)) // It allow us to safety load samename models
                 {
                     meshNameBase = meshNameBase + "_copy";
                 }

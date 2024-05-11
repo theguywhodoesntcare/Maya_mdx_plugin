@@ -5,8 +5,6 @@ using MdxLib.Animator;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
-using System.Xml.Linq;
-using System.Data;
 
 namespace wc3ToMaya.Animates
 {
@@ -27,22 +25,21 @@ namespace wc3ToMaya.Animates
             {
                 return;
             }
+            
             Dictionary<INode, MVector> nodeToPivot = new Dictionary<INode, MVector>();
+            StringBuilder sb = new StringBuilder();
 
             foreach (var pair in nodeToJoint)
             {
                 MVector pivot = pair.Value.getTranslation(MSpace.Space.kTransform);
                 nodeToPivot.Add(pair.Key, pivot);
-
-                MQuaternion rotation = new MQuaternion();
-                pair.Value.getRotation(rotation, MSpace.Space.kTransform);
             }
 
             timeEditorMEL.Enable();
             
             foreach (var seq in model.Sequences)
             {
-                ImportSequence(model, seq.ObjectId, nodeToJoint, composition, nodeToPivot);
+                ImportSequence(model, seq.ObjectId, nodeToJoint, composition, nodeToPivot, sb);
 
                 Thread.Sleep(1); // little bit magic!
                 // For some reason this commands has no effect
@@ -51,10 +48,9 @@ namespace wc3ToMaya.Animates
                 MGlobal.executeCommand("GoToBindPose;");
             }
 
-
             timeEditorMEL.SetSettings(composition, customStart, model.Sequences[0].GetDuration());
         }
-        private static void ImportSequence(CModel model, int id, Dictionary<INode, MFnIkJoint> nodeToJoint, string composition, Dictionary<INode, MVector> nodeToPivot)
+        private static void ImportSequence(CModel model, int id, Dictionary<INode, MFnIkJoint> nodeToJoint, string composition, Dictionary<INode, MVector> nodeToPivot, StringBuilder sb)
         {
             (int start, int finish, int duration, string seqName) = GetSequenceProperties(model.Sequences[id]);
             
@@ -65,6 +61,7 @@ namespace wc3ToMaya.Animates
 
                 foreach (var kf in pair.Key.Scaling)
                 {
+                    // !TODO Temporary solution, later should sort keyframes into sequences in advance.
                     if (kf.Time < start) continue;
                     if (kf.Time > finish) break;
                     int frameNumber = GetFrame(kf.Time, start);
@@ -74,16 +71,24 @@ namespace wc3ToMaya.Animates
                     SetKeyFrame(frameNumber, "scale", "scale", scale.x, scale.y, scale.z, name);
                 }
 
-
                 foreach (var kf in pair.Key.Rotation)
                 {
                     if (kf.Time < start) continue;
                     if (kf.Time > finish) break;
                     int frameNumber = GetFrame(kf.Time, start);
 
-                    MEulerRotation euler = kf.Value.ToEuler();
+                    //MEulerRotation euler = kf.Value.ToEuler();
+                    //SetKeyFrame(frameNumber, "rotate", "rotate", euler.x, euler.y, euler.z, name);
 
-                    SetKeyFrame(frameNumber, "rotate", "rotate", euler.x, euler.y, euler.z, name);
+                    // Euler is a bad way because it is gimbal lock
+                    // Happens too often, especially in Death animations
+                    // Use quaternions instead
+
+                    MGlobal.executeCommand($"currentTime {frameNumber}");
+                    MQuaternion quat = kf.Value.ToMQuaternion();
+                    pair.Value.setRotationQuaternion(quat.x, quat.y, quat.z, quat.w, MSpace.Space.kObject);
+
+                    MGlobal.executeCommand($"setKeyframe -bd 0 -hi none -cp 0 -s 0 -at \"rotate\" {name};"); ;
                 }
 
                 foreach (var kf in pair.Key.Translation)
@@ -96,12 +101,16 @@ namespace wc3ToMaya.Animates
 
                     SetKeyFrame(frameNumber, "move", "translate", pos.x + pivot.x, pos.y + pivot.y, pos.z + pivot.z, name);
                 }
+
+                // Force Maya to use quaternion interpolation
+                // https://download.autodesk.com/us/maya/docs/Maya85/Commands/rotationInterpolation.html
+                MGlobal.executeCommand($"rotationInterpolation -convert quaternion \"{pair.Value.name}.rotateX\"");
+
                 Linearize(pair.Key, pair.Value);
             }
 
-
             SelectRoot(nodeToJoint);
-            StringBuilder sb = new StringBuilder();
+            sb.Clear();
             sb.Append($"timeEditorTracks -e -addTrack -1 -path \"{composition}\";\n");
             sb.Append($"timeEditorTracks -e -trackName \"{seqName}\" -path \"{composition}|track1\";\n");
             sb.Append($"timeEditorAnimSource -aso -type animCurveTL -type animCurveTA -type animCurveTT -type animCurveTU -addRelatedKG true -recursively -includeRoot -rsa 1 \"{tempPrefix}{seqName}\";\n");
@@ -157,6 +166,7 @@ namespace wc3ToMaya.Animates
                 }
             }
         }
+
         internal static string CreateComposition(CModel model, string name)
         {
             MGlobal.executeCommand("TimeEditorWindow;");

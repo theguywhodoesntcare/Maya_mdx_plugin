@@ -8,6 +8,8 @@ namespace wc3ToMaya
 {
     internal static class MatCreator
     {
+        // !TODO Make shader names more readable
+
         // Graph Modifier
         static readonly MDGModifier dgMod = new MDGModifier();
 
