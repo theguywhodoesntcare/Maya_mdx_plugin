@@ -10,11 +10,11 @@ using System.Globalization;
 using System.Threading;
 using wc3ToMaya.Animates;
 
-[assembly: MPxFileTranslatorClass(typeof(wc3ToMaya.MyFormatTranslator), "Warcraft MDX", null, null, null)]
+[assembly: MPxFileTranslatorClass(typeof(wc3ToMaya.MDXTranslator), "Warcraft MDX", null, null, null)]
 
 namespace wc3ToMaya
 {
-    public class MyFormatTranslator : MPxFileTranslator
+    public class MDXTranslator : MPxFileTranslator
     {
         public override void reader(MFileObject file, string optionsString, FileAccessMode mode)
         {
@@ -23,7 +23,7 @@ namespace wc3ToMaya
             {
                 Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
                 string filePath = file.fullName;
-
+                
                 CModel model = new CModel();
 
                 using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
@@ -31,15 +31,16 @@ namespace wc3ToMaya
                     new CMdx().Load(filePath, fileStream, model);
 
                     Dictionary<INode, MFnIkJoint> nodeToJoint = Rig.CreateAndSaveData(model);
-                    string selector = Mesh.Create(model, Path.GetFileNameWithoutExtension(filePath), nodeToJoint);
+                    Mesh.Create(model, Path.GetFileNameWithoutExtension(filePath), nodeToJoint);
                     string composition = Animator.CreateComposition(model, Path.GetFileNameWithoutExtension(filePath));
 
-                    Animator.ImportSequences(model, nodeToJoint, composition, selector);
+                    Animator.ImportSequences(model, nodeToJoint, composition);
                     Rig.RemoveTempPrefix(nodeToJoint);
 
-                    Scene.ReapplyColorSpaceRules();
+                    //Scene.ReapplyColorSpaceRules();
                     Scene.SetViewportSettings();
                 }
+                //Curves.Create();
             }
             catch (Exception ex)
             {
@@ -53,6 +54,7 @@ namespace wc3ToMaya
                 Thread.CurrentThread.CurrentCulture = originalCulture;
             }
         }
+
 
         public override bool haveReadMethod()
         {

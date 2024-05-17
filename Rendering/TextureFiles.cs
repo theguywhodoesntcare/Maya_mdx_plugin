@@ -80,6 +80,8 @@ namespace wc3ToMaya.Rendering
 
             dgMod.doIt();
 
+            ReapplyColorSpaceRules(fileNode);
+
             return (place2dNode, fileNode);
         }
         static string GetTexturePath(string texture)
@@ -121,6 +123,14 @@ namespace wc3ToMaya.Rendering
                 }
             }
             return texture;
+        }
+
+        private static void ReapplyColorSpaceRules(MFnDependencyNode fileNode)
+        {
+            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.cmEnabled {fileNode.name}.colorManagementEnabled");
+            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.configFileEnabled {fileNode.name}.colorManagementConfigFileEnabled");
+            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.configFilePath {fileNode.name}.colorManagementConfigFilePath");
+            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.workingSpaceName {fileNode.name}.workingSpace");
         }
         static string ConvertBLP(string texture, string texturePath)
         {

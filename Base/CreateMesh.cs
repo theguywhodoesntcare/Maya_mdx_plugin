@@ -10,11 +10,8 @@ namespace wc3ToMaya
 {
     internal class Mesh
     {
-        internal static string Create(CModel model, string name, Dictionary<INode, MFnIkJoint> nodeToJoint)
-        {
-            StringBuilder sb = new StringBuilder();
-            sb.Append("select -r ");
-
+        internal static void Create(CModel model, string name, Dictionary<INode, MFnIkJoint> nodeToJoint)
+        {           
             var textureDict = TextureFiles.CreateNodes(model);
             foreach (CGeoset geoset in model.Geosets)
             {
@@ -62,7 +59,7 @@ namespace wc3ToMaya
                     vertexList.Add(vertex.ObjectId);
                     normals.Add(vertex.Normal.ToMVector(false));
                 }
-
+                
                 foreach (CGeosetFace face in geoset.Faces)
                 {
                     polygonCounts.append(3);
@@ -95,14 +92,11 @@ namespace wc3ToMaya
                 MFnDagNode dagNodeFn = new MFnDagNode(parent);
                 string psName = $"{meshNameBase}_polySurface";
                 dagNodeFn.setName(psName);
-                sb.Append(psName);
-                sb.Append(" ");
                 //CreateShapeOrig(meshFn);
                 CreateSkinClusterMEL(psName, matrices, joints);
 
                 MatCreator.СreateMat(geoset.Material.Object, meshFn, textureDict);
             }
-            return sb.ToString();
         }
         static void SetNormals(MFnMesh meshFn, MIntArray verts, MVectorArray normals)
         {
@@ -111,6 +105,7 @@ namespace wc3ToMaya
 
         static void SetPivotToGeometricCenter(MFnMesh meshFn)
         {
+            MFnSkinCluster cluster = new MFnSkinCluster();
             // get center
             MBoundingBox bbox = meshFn.boundingBox;
             MPoint center = bbox.center;
