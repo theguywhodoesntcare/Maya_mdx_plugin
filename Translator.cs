@@ -32,7 +32,7 @@ namespace wc3ToMaya
 
                     Dictionary<INode, MFnIkJoint> nodeToJoint = Rig.CreateAndSaveData(model);
                     Mesh.Create(model, Path.GetFileNameWithoutExtension(filePath), nodeToJoint);
-                    string composition = Animator.CreateComposition(model, Path.GetFileNameWithoutExtension(filePath));
+                    string composition = timeEditorMEL.CreateComposition(model, Path.GetFileNameWithoutExtension(filePath));
 
                     Animator.ImportSequences(model, nodeToJoint, composition);
                     Rig.RemoveTempPrefix(nodeToJoint);

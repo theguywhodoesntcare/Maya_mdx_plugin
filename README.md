@@ -8,11 +8,12 @@ Plugin adds file translator and four MEL commands for setting up texture loading
 Made and tested for Autodesk Maya 2024.
 
 # Installation
-1. Copy **wc3ToMaya.nll.dll** and **MdxLib.dll** to binary plug-ins directory. For example **C:\Program Files\Autodesk\Maya2024\bin\plug-ins**.
+1. Download the latest release, or build plugin yourself. Copy **wc3ToMaya.nll.dll** and **MdxLib.dll** to binary plug-ins directory. For example **C:\Program Files\Autodesk\Maya2024\bin\plug-ins**.
 2. Find **wc3ToMaya.nll.dll** in Plug-in Manager and set checkboxes.
 ![Plug-in](images/window.png)
+3. *Optional*. If loading does not work and error “Invoking ExecuteInDefaultAppDomain() failed” is displayed in Script Edior, then add the **maya.exe.config** file to the **bin** folder (for example **C:\Program Files\Autodesk\Maya2024\bin**). See the known issues section for more information.
 3. *Optional*. If you need automatic loading of textures, then use the MEL command **"wc3_setAssetDir;"** in the script editor, then select the root directory of the unpacked Warcraft. The following formats are available: .dds, .tga, .png, .tif, .tiff, .bmp, .jpg, .jpeg.
-4. *Optional*. If you need to convert .blp textures while importing, then integration with *Retera Model Studio 04.4k+* is possible. Use the MEL command **"wc3_setCLIApp;"**, then select ReteraModelStudio.exe. After this, the blp textures will be automatically converted to png (new file will be created near).
+4. *Optional. Experimental*. If you need to convert .blp textures while importing, then integration with *Retera Model Studio 04.4k+* is possible. Use the MEL command **"wc3_setCLIApp;"**, then select ReteraModelStudio.exe. After this, the blp textures will be automatically converted to png (new file will be created near).
 
 # Importing
 
@@ -39,8 +40,10 @@ Plugin will create a track and clip for each sequence (except global sequences) 
 
 # Known Issues
 
-- Enabled *Echo All Commands* option in the Script Editor can slow import process, since plugin uses a huge number of MEL commands (almost everything related to rigging, skinning and animations).
+- Error *"Invoking ExecuteInDefaultAppDomain() failed"* while loading plugin. Solution: add the maya.exe.config file to the bin folder (for example C:\Program Files\Autodesk\Maya2024\bin). More info [here](https://forums.autodesk.com/t5/maya-programming/odd-net-plugin-behaviour/td-p/8129246).
+- Enabled *Echo All Commands* option in the Script Editor can slow import process, since plugin uses a considerable number of MEL commands.
 - Very rarely, a bug is possible when an incorrect texture file is applied to mesh. Solution: reimport model.
 - Plugin imports animations with a default *Spline* controller, OR with a *Linear* controller if it is used in Warcraft model. 3DSMax TCB controller (the most common case in Blizzard models) is not supported in Maya. *InTan and OutTan values are ignoring.*
 - In addition to the point above, it should be noted that due to peculiarities interpolation of quaternions in Maya, unexpected spikes may appear in curves between nearby frames. Like the picture below. The plugin does not correct these artifacts. The easiest way to avoid it is to use a *Linear* controller instead of a *Spline* one.
+
 ![Curve](images/curvespike.png)

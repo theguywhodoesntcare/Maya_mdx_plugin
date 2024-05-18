@@ -4,7 +4,6 @@ using MdxLib.Model;
 using MdxLib.Primitives;
 using System.Collections.Generic;
 using System.Linq;
-using System.Xml.Linq;
 
 namespace wc3ToMaya.Animates
 {

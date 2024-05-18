@@ -1,4 +1,5 @@
 ﻿using Autodesk.Maya.OpenMaya;
+using MdxLib.Model;
 
 namespace wc3ToMaya.Animates
 {
@@ -22,6 +23,11 @@ namespace wc3ToMaya.Animates
                 $"playbackOptions -min {start} -max {duration + start};" +
                 "playButtonForward;";
             MGlobal.executeCommandOnIdle(command);
+        }
+        internal static string CreateComposition(CModel model, string name)
+        {
+            MGlobal.executeCommand("TimeEditorWindow;");
+            return MGlobal.executeCommandStringResult($"timeEditorComposition \"{name}_{model.Name}\";");
         }
     }
 }

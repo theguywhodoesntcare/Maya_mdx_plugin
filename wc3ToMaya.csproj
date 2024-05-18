@@ -64,6 +64,9 @@
     <Compile Include="Rendering\TextureFiles.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="other\maya.exe.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Rendering\scene.mel" />
   </ItemGroup>
   <ItemGroup />

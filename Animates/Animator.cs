@@ -4,8 +4,6 @@ using MdxLib.Model;
 using MdxLib.Animator;
 using System.Collections.Generic;
 using System.Text;
-using System.Linq;
-using System.Data;
 
 namespace wc3ToMaya.Animates
 {
@@ -175,11 +173,6 @@ namespace wc3ToMaya.Animates
                     MGlobal.executeCommand($"select -add {name}");
                 }
             }
-        }
-        internal static string CreateComposition(CModel model, string name)
-        {
-            MGlobal.executeCommand("TimeEditorWindow;");
-            return MGlobal.executeCommandStringResult($"timeEditorComposition \"{name}_{model.Name}\";");
         }
     }
 }

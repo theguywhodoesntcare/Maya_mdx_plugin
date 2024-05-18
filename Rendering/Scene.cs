@@ -6,11 +6,11 @@ namespace wc3ToMaya.Rendering
     {
         internal static void SetViewportSettings() 
         {
-            MGlobal.executeCommand("setAttr \"hardwareRenderingGlobals.transparencyAlgorithm\" 5;", true);
-            MGlobal.executeCommand("modelEditor - edit - displayAppearance smoothShaded - activeOnly false modelPanel4;", true);
+            MGlobal.executeCommand("setAttr \"hardwareRenderingGlobals.transparencyAlgorithm\" 5;");
+            MGlobal.executeCommand("modelEditor - edit - displayAppearance smoothShaded - activeOnly false modelPanel4;");
             MGlobal.executeCommand("modelEditor - e - displayTextures true modelPanel4;");
         }
-        static internal void ReapplyColorSpaceRules()
+        /*static internal void ReapplyColorSpaceRules()
         {
             // https://stackoverflow.com/questions/43693879/locked-file-texture-in-maya-shadingnode
 
@@ -27,6 +27,6 @@ namespace wc3ToMaya.Rendering
 
                 it.next();
             }
-        }
+        }*/
     }
 }

@@ -134,16 +134,8 @@ namespace wc3ToMaya
 
             var clusterName = $"{meshName}SkinCluster";
 
-            var melScript = new string[]
-            {
-                "select -d;",
-                $"select -r {sb} {meshName};",
-                $"skinCluster -n {clusterName} -dr 4.5 -tsb;", // Create skinCluster
-            };
-            foreach (var command in melScript)
-            {
-                MGlobal.executeCommand(command);
-            }
+            MGlobal.executeCommand($"select -clear; select -r {sb} {meshName};");
+            MGlobal.executePythonCommand($"import maya.cmds as cmds\r\ncmds.skinCluster(n='{clusterName}')");
 
             foreach (var pair in matrices)
             {
