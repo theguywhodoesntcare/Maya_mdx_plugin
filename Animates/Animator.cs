@@ -11,6 +11,7 @@ namespace wc3ToMaya.Animates
     {
         readonly static int customStart = 10;
         readonly static string tempPrefix = "TEMPNAME_";
+        readonly static int divisor = 2; // scale factor
 
         public static void ImportSequences(CModel model, Dictionary<INode, MFnIkJoint> nodeToJoint, string composition)
         {
@@ -34,7 +35,7 @@ namespace wc3ToMaya.Animates
                 ImportSequence(model, seq.ObjectId, nodeToJoint, composition, nodeToPivot, sb);
             }
             
-            timeEditorMEL.SetSettings(composition, customStart, model.Sequences[0].GetDuration());
+            timeEditorMEL.SetSettings(composition, customStart, model.Sequences[0].GetDuration() / divisor);
         }
 
         private static void ImportSequence(CModel model, int id, Dictionary<INode, MFnIkJoint> nodeToJoint, string composition, Dictionary<INode, MVector> nodeToPivot, StringBuilder sb)
@@ -47,7 +48,6 @@ namespace wc3ToMaya.Animates
                 var joint = pair.Value;
 
                 MVector pivot = nodeToPivot[node];
-                string name = joint.name;
 
                 MTimeArray frames = new MTimeArray();
                 MDoubleArray[] values = new MDoubleArray[3] { new MDoubleArray(), new MDoubleArray(), new MDoubleArray() }; // x, y, z Values
@@ -57,7 +57,7 @@ namespace wc3ToMaya.Animates
 
                 foreach (var kf in scalingList)
                 {
-                    int frameNumber = GetFrame(kf.Time, start);
+                    int frameNumber = GetFrame(kf.Time, start, frames);
 
                     MPoint scale = kf.Value.ToMPoint(false);
 
@@ -71,7 +71,7 @@ namespace wc3ToMaya.Animates
                 
                 foreach (var kf in rotList)
                 {
-                    int frameNumber = GetFrame(kf.Time, start);
+                    int frameNumber = GetFrame(kf.Time, start, frames);
 
                     MEulerRotation euler = kf.Value.ToMQuaternion().asEulerRotation;
 
@@ -85,7 +85,7 @@ namespace wc3ToMaya.Animates
 
                 foreach (var kf in posList)
                 {
-                    int frameNumber = GetFrame(kf.Time, start);
+                    int frameNumber = GetFrame(kf.Time, start, frames);
                     MPoint pos = kf.Value.ToMPoint();
 
                     frames.append(frameNumber);
@@ -96,11 +96,13 @@ namespace wc3ToMaya.Animates
 
                 Linearize(node, joint);
             }
+
+            // duration /= divisor;
             sb.Clear();
             sb.Append($"timeEditorTracks -e -addTrack -1 -path \"{composition}\";\n");
             sb.Append($"timeEditorTracks -e -trackName \"{seqName}\" -path \"{composition}|track1\";\n");
             sb.Append($"timeEditorAnimSource -aso -type animCurveTL -type animCurveTA -type animCurveTT -type animCurveTU -addRelatedKG true -recursively -includeRoot -rsa 1 \"{tempPrefix}{seqName}\";\n");
-            sb.Append($"timeEditorClip -startTime {customStart} -rootClipId -1  -duration {duration} -animSource \"{tempPrefix}{seqName}_AnimSource\" -track \"{composition}:{id}\" \"{seqName}\";\n");
+            sb.Append($"timeEditorClip -startTime {customStart} -rootClipId -1  -animSource \"{tempPrefix}{seqName}_AnimSource\" -track \"{composition}:{id}\" \"{seqName}\";\n"); // "-duration {duration}" arg was removed
             sb.Append($"rename \"{tempPrefix}{seqName}_AnimSource\" \"{seqName}_AnimSource\";\n");
             sb.Append($"timeEditorClip -e -clipId {id + 1} -name \"{seqName}\";\n");
             sb.Append($"timeEditorTracks -e -trackName \"{seqName}\" -trackIndex {id} {composition};\n");
@@ -118,10 +120,11 @@ namespace wc3ToMaya.Animates
             if (frames.length > 0)
             {
                 var (x, y, z) = (animCurves[0], animCurves[1], animCurves[2]);
+                MObject obj = joint.objectProperty;
 
-                x.create(joint.objectProperty, joint.attribute($"{type}X"));
-                y.create(joint.objectProperty, joint.attribute($"{type}Y"));
-                z.create(joint.objectProperty, joint.attribute($"{type}Z"));
+                x.create(obj, joint.attribute($"{type}X"));
+                y.create(obj, joint.attribute($"{type}Y"));
+                z.create(obj, joint.attribute($"{type}Z"));
 
                 x.addKeys(frames, values[0]);
                 y.addKeys(frames, values[1]);
@@ -164,9 +167,15 @@ namespace wc3ToMaya.Animates
             int duration = seq.GetDuration();
             return (seq.IntervalStart, seq.IntervalEnd, duration, $"{seq.Name.Standardize()}_ID{seq.ObjectId}");
         }
-        private static int GetFrame(int time, int start)
+        private static int GetFrame(int time, int start, MTimeArray frames)
         {
-            return time + 10 - start;
+            int f = (time - start) / divisor + customStart;
+            while (frames.Contains(f))
+            {
+                f++;
+            }
+
+            return f;
         }
         private static void SelectRoot(Dictionary<INode, MFnIkJoint> nodeToJoint)
         {

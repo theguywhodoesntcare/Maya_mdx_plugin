@@ -107,7 +107,6 @@ namespace wc3ToMaya
 
         static void SetPivotToGeometricCenter(MFnMesh meshFn)
         {
-            MFnSkinCluster cluster = new MFnSkinCluster();
             // get center
             MBoundingBox bbox = meshFn.boundingBox;
             MPoint center = bbox.center;
