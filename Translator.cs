@@ -25,7 +25,6 @@ namespace wc3ToMaya
                 string filePath = file.fullName;
                 
                 CModel model = new CModel();
-
                 using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
                 {
                     new CMdx().Load(filePath, fileStream, model);
@@ -37,10 +36,8 @@ namespace wc3ToMaya
                     Animator.ImportSequences(model, nodeToJoint, composition);
                     Rig.RemoveTempPrefix(nodeToJoint);
 
-                    //Scene.ReapplyColorSpaceRules();
                     Scene.SetViewportSettings();
                 }
-                //Curves.Create();
             }
             catch (Exception ex)
             {

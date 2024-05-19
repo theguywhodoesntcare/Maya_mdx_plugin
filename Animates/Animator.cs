@@ -94,12 +94,6 @@ namespace wc3ToMaya.Animates
 
                 FillCurves(animCurves, values, frames, joint, "translate");
 
-                // Force Maya to use quaternion interpolation
-                // https://download.autodesk.com/us/maya/docs/Maya85/Commands/rotationInterpolation.html
-                MGlobal.executeCommand($"rotationInterpolation -convert quaternion \"{name}.rotateX\"");
-                MGlobal.executeCommand($"rotationInterpolation -convert quaternion \"{name}.rotateY\"");
-                MGlobal.executeCommand($"rotationInterpolation -convert quaternion \"{name}.rotateZ\"");
-
                 Linearize(node, joint);
             }
             sb.Clear();
@@ -123,13 +117,25 @@ namespace wc3ToMaya.Animates
         {
             if (frames.length > 0)
             {
-                animCurves[0].create(joint.objectProperty, joint.attribute($"{type}X"));
-                animCurves[1].create(joint.objectProperty, joint.attribute($"{type}Y"));
-                animCurves[2].create(joint.objectProperty, joint.attribute($"{type}Z"));
+                var (x, y, z) = (animCurves[0], animCurves[1], animCurves[2]);
 
-                animCurves[0].addKeys(frames, values[0]);
-                animCurves[1].addKeys(frames, values[1]);
-                animCurves[2].addKeys(frames, values[2]);
+                x.create(joint.objectProperty, joint.attribute($"{type}X"));
+                y.create(joint.objectProperty, joint.attribute($"{type}Y"));
+                z.create(joint.objectProperty, joint.attribute($"{type}Z"));
+
+                x.addKeys(frames, values[0]);
+                y.addKeys(frames, values[1]);
+                z.addKeys(frames, values[2]);
+               
+                if (type == "rotate")
+                {
+                    // Force Maya to use quaternion interpolation
+                    // https://download.autodesk.com/us/maya/docs/Maya85/Commands/rotationInterpolation.html
+
+                    // "quaternion" interpolation can cause unexpected spikes on curve between nearby keyframes
+                    // so "quaternionSlerp" is used instead
+                    MGlobal.executeCommand($"rotationInterpolation -c quaternionSlerp {x.name} {y.name} {z.name}");
+                }
             }
             frames.clear();
             foreach (var arr in values)

@@ -51,6 +51,7 @@
     <Compile Include="Animates\Animator.cs" />
     <Compile Include="Animates\Extensions.cs" />
     <Compile Include="Animates\timeEditorMEL.cs" />
+    <Compile Include="Class1.cs" />
     <Compile Include="ExtContent\BlpCLIConverter.cs" />
     <Compile Include="ExtContent\AssetsDir.cs" />
     <Compile Include="Translator.cs" />

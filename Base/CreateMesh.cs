@@ -11,8 +11,10 @@ namespace wc3ToMaya
     internal class Mesh
     {
         internal static void Create(CModel model, string name, Dictionary<INode, MFnIkJoint> nodeToJoint)
-        {           
+        {
+            MSelectionList selList = new MSelectionList();
             var textureDict = TextureFiles.CreateNodes(model);
+
             foreach (CGeoset geoset in model.Geosets)
             {
                 MPointArray points = new MPointArray();
@@ -93,7 +95,7 @@ namespace wc3ToMaya
                 string psName = $"{meshNameBase}_polySurface";
                 dagNodeFn.setName(psName);
                 //CreateShapeOrig(meshFn);
-                CreateSkinClusterMEL(psName, matrices, joints);
+                CreateSkinClusterMEL(psName, matrices, joints, selList);
 
                 MatCreator.СreateMat(geoset.Material.Object, meshFn, textureDict);
             }
@@ -122,21 +124,22 @@ namespace wc3ToMaya
             }
         }
 
-        static void CreateSkinClusterMEL(string meshName, Dictionary<int, List<string>> matrices, List<string> joints)
+        static void CreateSkinClusterMEL(string meshName, Dictionary<int, List<string>> matrices, List<string> joints, MSelectionList selList)
         {
-            MGlobal.executeCommand($"select -clear;");
-            var sb = new StringBuilder();
+            selList.clear();
+            selList.add(meshName);
+
             foreach (var jointName in joints)
             {
-                sb.AppendFormat("{0} ", jointName);
+                selList.add(jointName);
             }
-            sb.Length--;
 
             var clusterName = $"{meshName}SkinCluster";
 
-            MGlobal.executeCommand($"select -clear; select -r {sb} {meshName};");
+            MGlobal.setActiveSelectionList(selList);
             MGlobal.executePythonCommand($"import maya.cmds as cmds\r\ncmds.skinCluster(n='{clusterName}')");
 
+            var sb = new StringBuilder();
             foreach (var pair in matrices)
             {
                 // Select vertex

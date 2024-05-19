@@ -41,9 +41,5 @@ Plugin will create a track and clip for each sequence (except global sequences) 
 # Known Issues
 
 - Error *"Invoking ExecuteInDefaultAppDomain() failed"* while loading plugin. Solution: add the maya.exe.config file to the bin folder (for example C:\Program Files\Autodesk\Maya2024\bin). More info [here](https://forums.autodesk.com/t5/maya-programming/odd-net-plugin-behaviour/td-p/8129246).
-- Enabled *Echo All Commands* option in the Script Editor can slow import process, since plugin uses a considerable number of MEL commands.
 - Very rarely, a bug is possible when an incorrect texture file is applied to mesh. Solution: reimport model.
 - Plugin imports animations with a default *Spline* controller, OR with a *Linear* controller if it is used in Warcraft model. 3DSMax TCB controller (the most common case in Blizzard models) is not supported in Maya. *InTan and OutTan values are ignoring.*
-- In addition to the point above, it should be noted that due to peculiarities interpolation of quaternions in Maya, unexpected spikes may appear in curves between nearby frames. Like the picture below. The plugin does not correct these artifacts. The easiest way to avoid it is to use a *Linear* controller instead of a *Spline* one.
-
-![Curve](images/curvespike.png)
