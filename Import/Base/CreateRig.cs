@@ -55,7 +55,6 @@ namespace wc3ToMaya
                         CVector3 pivotPoint = child.PivotPoint;
 
                         CVector3 diff = new CVector3(pivotPoint.X - parentPivotPoint.X, pivotPoint.Y - parentPivotPoint.Y, pivotPoint.Z - parentPivotPoint.Z);
-
                         MVector jointPos = diff.ToMVector();
 
                         nodeToJoint[node].addChild(nodeToJoint[child].objectProperty);
@@ -82,7 +81,7 @@ namespace wc3ToMaya
         {
             MFnIkJoint joint = new MFnIkJoint();
             MObject jointObj = joint.create(MObject.kNullObj);
-            joint.setName($"{tempPrefix}{node.Name}");
+            joint.setName($"{tempPrefix}{node.Name.Standardize()}");
 
             CVector3 pivotPoint = node.PivotPoint; // world position
 

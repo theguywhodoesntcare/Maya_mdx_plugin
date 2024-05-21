@@ -1,4 +1,5 @@
 ﻿using Autodesk.Maya.OpenMaya;
+using MdxLib.Model;
 using MdxLib.Primitives;
 using System;
 using System.Text.RegularExpressions;
@@ -93,6 +94,16 @@ namespace wc3ToMaya
             MEulerRotation eulerRot = vector.ToMQuaternion().normalizeIt().asEulerRotation;
             eulerRot.setValue(eulerRot.x.ToDeg(), eulerRot.y.ToDeg(), eulerRot.z.ToDeg());
             return eulerRot;
+        }
+
+    }
+    public static class CGeosetFacesExtensions
+    {
+        public static bool IsDegenerative(this CGeosetFace face)
+        {
+            return face.Vertex2.Object == face.Vertex3.Object ||
+                   face.Vertex1.Object == face.Vertex2.Object ||
+                   face.Vertex1.Object == face.Vertex3.Object;
         }
     }
 }

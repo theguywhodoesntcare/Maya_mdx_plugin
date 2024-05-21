@@ -107,7 +107,7 @@ namespace wc3ToMaya.Animates
             sb.Append($"timeEditorClip -e -clipId {id + 1} -name \"{seqName}\";\n");
             sb.Append($"timeEditorTracks -e -trackName \"{seqName}\" -trackIndex {id} {composition};\n");
 
-            MGlobal.executeCommand(sb.ToString());
+            MGlobal.executeCommand(sb.ToString(), false, false);
         }
         private static void SetXYZ(MDoubleArray[] arrays, double x, double y, double z)
         {

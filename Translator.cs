@@ -52,6 +52,34 @@ namespace wc3ToMaya
             }
         }
 
+        /*public override void writer(MFileObject file, string optionsString, FileAccessMode mode)
+        {
+            CultureInfo originalCulture = Thread.CurrentThread.CurrentCulture;
+            try
+            {
+                string filePath = file.fullName;
+                filePath = filePath.Replace("mdx", "mdl");
+                CModel model = new CModel();
+                MeshIterator.IterateOverMeshes(model);
+                using (FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                {
+                    new CMdl().Save(filePath, fileStream, model);
+                }
+                MGlobal.displayInfo("File was wrote");
+            }
+            catch (Exception ex)
+            {
+                MGlobal.displayInfo($"Error while exporting Warcraft 3 File: {ex.Message}");
+                MGlobal.displayInfo($"Source: {ex.Source}");
+                MGlobal.displayInfo($"Stack Trace: {ex.StackTrace}");
+                MGlobal.executeCommandOnIdle("ScriptEditor;");
+            }
+            finally
+            {
+                Thread.CurrentThread.CurrentCulture = originalCulture;
+            }
+        }*/
+
 
         public override bool haveReadMethod()
         {
@@ -60,7 +88,7 @@ namespace wc3ToMaya
 
         public override bool haveWriteMethod()
         {
-            return false;
+            return true;
         }
 
         public override string defaultExtension()

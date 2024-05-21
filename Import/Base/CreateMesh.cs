@@ -1,6 +1,7 @@
 ﻿using Autodesk.Maya.OpenMaya;
 using Autodesk.Maya.OpenMayaAnim;
 using MdxLib.Model;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -17,13 +18,13 @@ namespace wc3ToMaya
 
             foreach (CGeoset geoset in model.Geosets)
             {
-                MPointArray points = new MPointArray();
-                MFloatArray uArray = new MFloatArray();
-                MFloatArray vArray = new MFloatArray();
-                MIntArray polygonCounts = new MIntArray();
+                MPointArray points = new MPointArray(); 
+                MFloatArray uArray = new MFloatArray(); 
+                MFloatArray vArray = new MFloatArray(); 
+
+                MIntArray polygonCounts = new MIntArray(); 
                 MIntArray polygonConnects = new MIntArray();
 
-                //normals
                 MIntArray vertexList = new MIntArray();
                 MVectorArray normals = new MVectorArray();
                 
@@ -53,7 +54,6 @@ namespace wc3ToMaya
                     foreach (var node in group.Nodes)
                     {
                         names.Add(nodeToJoint[node.Node.Node].name);
-                        //MGlobal.displayInfo($"Vertex {vertex.ObjectId}: {node.Node.Node.Name}");
                     }
                     matrices.Add(vertex.ObjectId, names);
 
@@ -61,17 +61,13 @@ namespace wc3ToMaya
                     vertexList.Add(vertex.ObjectId);
                     normals.Add(vertex.Normal.ToMVector(false));
                 }
-                
-                foreach (CGeosetFace face in geoset.Faces)
-                {
-                    polygonCounts.append(3);
-                    polygonConnects.append(face.Vertex1.Object.ObjectId);
-                    polygonConnects.append(face.Vertex2.Object.ObjectId);
-                    polygonConnects.append(face.Vertex3.Object.ObjectId);
-                }
+
+                GetFaces(geoset, polygonCounts, polygonConnects);
 
                 MFnMesh meshFn = new MFnMesh();
                 MObject mesh = meshFn.create(points.Count, polygonCounts.Count, points, polygonCounts, polygonConnects);
+
+                meshFn.clearUVs();
                 meshFn.setUVs(uArray, vArray);
                 meshFn.assignUVs(polygonCounts, polygonConnects);
 
@@ -81,6 +77,7 @@ namespace wc3ToMaya
 
                 // rename
                 string meshNameBase = $"{name}_{model.Name}_{geoset.ObjectId}";
+                meshNameBase = meshNameBase.Standardize();
 
                 while (IsExist(meshNameBase)) // It allow us to safety load samename models
                 {
@@ -94,11 +91,28 @@ namespace wc3ToMaya
                 MFnDagNode dagNodeFn = new MFnDagNode(parent);
                 string psName = $"{meshNameBase}_polySurface";
                 dagNodeFn.setName(psName);
-                //CreateShapeOrig(meshFn);
+
                 CreateSkinClusterMEL(psName, matrices, joints, selList);
 
                 MatCreator.СreateMat(geoset.Material.Object, meshFn, textureDict);
             }
+        }
+        static void GetFaces(CGeoset geoset, MIntArray polygonCounts, MIntArray polygonConnects)
+        {
+            int degenerativeFaces = 0;
+            foreach (CGeosetFace face in geoset.Faces)
+            {
+                if (face.IsDegenerative()) // polygons with duplicate verts will cause an exception when calling assignUVs()
+                {
+                    degenerativeFaces++;
+                    continue;
+                }
+                polygonCounts.append(3);
+                polygonConnects.append(face.Vertex1.Object.ObjectId);
+                polygonConnects.append(face.Vertex2.Object.ObjectId);
+                polygonConnects.append(face.Vertex3.Object.ObjectId);
+            }
+            if (degenerativeFaces > 0) { MGlobal.displayWarning($"{degenerativeFaces} polygons with duplicate vertices were found and removed from the mesh. Check and correct input data"); }
         }
         static void SetNormals(MFnMesh meshFn, MIntArray verts, MVectorArray normals)
         {
@@ -129,7 +143,7 @@ namespace wc3ToMaya
             selList.add(meshName);
 
             foreach (var jointName in joints)
-            {
+            {                
                 selList.add(jointName);
             }
 
@@ -137,7 +151,6 @@ namespace wc3ToMaya
 
             MGlobal.setActiveSelectionList(selList);
             MGlobal.executePythonCommand($"import maya.cmds as cmds\r\ncmds.skinCluster(n='{clusterName}')");
-
             var sb = new StringBuilder();
             foreach (var pair in matrices)
             {

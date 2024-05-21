@@ -48,27 +48,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Animates\Animator.cs" />
-    <Compile Include="Animates\Extensions.cs" />
-    <Compile Include="Animates\timeEditorMEL.cs" />
+    <Compile Include="Import\Animates\Animator.cs" />
+    <Compile Include="Import\Animates\Extensions.cs" />
+    <Compile Include="Import\Animates\timeEditorMEL.cs" />
     <Compile Include="Class1.cs" />
-    <Compile Include="ExtContent\BlpCLIConverter.cs" />
-    <Compile Include="ExtContent\AssetsDir.cs" />
+    <Compile Include="Import\ExtContent\BlpCLIConverter.cs" />
+    <Compile Include="Import\ExtContent\AssetsDir.cs" />
     <Compile Include="Translator.cs" />
-    <Compile Include="Base\CreateMesh.cs" />
-    <Compile Include="Base\CreateRig.cs" />
-    <Compile Include="Base\Extensions.cs" />
-    <Compile Include="Rendering\Extensions.cs" />
-    <Compile Include="Rendering\Materials.cs" />
+    <Compile Include="Import\Base\CreateMesh.cs" />
+    <Compile Include="Import\Base\CreateRig.cs" />
+    <Compile Include="Import\Base\Extensions.cs" />
+    <Compile Include="Import\Rendering\Extensions.cs" />
+    <Compile Include="Import\Rendering\Materials.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Rendering\Scene.cs" />
-    <Compile Include="Rendering\TextureFiles.cs" />
+    <Compile Include="Import\Rendering\Scene.cs" />
+    <Compile Include="Import\Rendering\TextureFiles.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="other\maya.exe.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="Rendering\scene.mel" />
+    <None Include="Import\Rendering\scene.mel" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
