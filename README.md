@@ -13,7 +13,7 @@ Made and tested for Autodesk Maya 2024.
 ![Plug-in](images/window.png)
 3. *Optional*. If loading does not work and error “Invoking ExecuteInDefaultAppDomain() failed” is displayed in Script Edior, then add the **maya.exe.config** file to the **bin** folder (for example **C:\Program Files\Autodesk\Maya2024\bin**). See the known issues section for more information.
 3. *Optional*. If you need automatic loading of textures, then use the MEL command **"wc3_setAssetDir;"** in the script editor, then select the root directory of the unpacked Warcraft. The following formats are available: .dds, .tga, .png, .tif, .tiff, .bmp, .jpg, .jpeg.
-4. *Optional. Experimental*. If you need to convert .blp textures while importing, then integration with *Retera Model Studio 04.4k+* is possible. Use the MEL command **"wc3_setCLIApp;"**, then select ReteraModelStudio.exe. After this, the blp textures will be automatically converted to png (new file will be created near).
+4. *Optional. Experimental*. If you need to convert .blp textures while importing, then integration with *Retera Model Studio 04.4k+* is possible. Use the MEL command **"wc3_setCLIApp;"**, then select ReteraModelStudio.exe. After this, the blp textures will be automatically converted to png (new file will be created near). *A large number of textures being converted on the fly may cause slow loading speeds.*
 
 # Importing
 
@@ -27,7 +27,7 @@ Other types of nodes except for bones and helpers are not supported. Geoset anim
 
 Plugin automatically creates a Lambert shader for single-layer materials, and a Layered shader for multi-layer materials.
 
-Textures with a path to the file are supported; among procedural/dynamic textures (ReplaceableId), only Team Color (ReplaceableId 1) is supported, others are ignored. Plugin creates File Node for every non-replaceable texture.
+Textures with a path to the file are supported; among procedural/dynamic textures (ReplaceableId), only Team Color (ReplaceableId 1) is supported, others are ignored. File Node for every non-replaceable texture will be created. Plugin will try to find textures in importing model folder (including subfolders), as well as in the assets directory (if it is installed using the appropriate MEL command).
 
 Team Color is implemented as a Layered shader, with a custom color on the second layer.
 

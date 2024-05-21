@@ -11,10 +11,10 @@ namespace wc3ToMaya
 {
     internal class Mesh
     {
-        internal static void Create(CModel model, string name, Dictionary<INode, MFnIkJoint> nodeToJoint)
+        internal static void Create(CModel model, Dictionary<INode, MFnIkJoint> nodeToJoint, string name, string dirName)
         {
             MSelectionList selList = new MSelectionList();
-            var textureDict = TextureFiles.CreateNodes(model);
+            var textureDict = TextureFiles.CreateNodes(model, dirName);
 
             foreach (CGeoset geoset in model.Geosets)
             {

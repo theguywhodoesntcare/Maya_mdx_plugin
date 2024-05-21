@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using Autodesk.Maya.OpenMaya;
-using Autodesk.Maya.OpenMayaRender.MHWRender;
 using MdxLib.Model;
 
 namespace wc3ToMaya.Rendering
@@ -23,8 +24,10 @@ namespace wc3ToMaya.Rendering
             { "colorManagementEnabled", true },
             { "colorSpace", "sRGB" }
         };
+        // List of valid extensions for Maya
+        static readonly string[] validExtensions = { ".dds", ".tga", ".png", ".tif", ".tiff", ".bmp", ".jpg", ".jpeg" };
 
-        internal static Dictionary<string, (MFnDependencyNode, MFnDependencyNode)> CreateNodes(CModel model)
+        internal static Dictionary<string, (MFnDependencyNode, MFnDependencyNode)> CreateNodes(CModel model, string dirName)
         {
             var dictionary = new Dictionary<string, (MFnDependencyNode, MFnDependencyNode)>();
             MGlobal.displayInfo("\r\nWarcraft 3 Textures:");
@@ -32,7 +35,7 @@ namespace wc3ToMaya.Rendering
             {
                 if (texture.FileName.Length > 0)
                 {
-                    dictionary.Add(texture.FileName, CreateNodePair(texture.FileName, texture.WrapWidth, texture.WrapHeight));
+                    dictionary.Add(texture.FileName, CreateNodePair(texture.FileName, texture.WrapWidth, texture.WrapHeight, dirName));
                     MGlobal.displayInfo($" — {texture.FileName}");
                 }
                 else
@@ -44,7 +47,7 @@ namespace wc3ToMaya.Rendering
             return dictionary;
         }
 
-        static (MFnDependencyNode, MFnDependencyNode) CreateNodePair(string texture, bool wrapU, bool wrapV)
+        static (MFnDependencyNode, MFnDependencyNode) CreateNodePair(string texture, bool wrapU, bool wrapV, string dirName)
         {
             // create place2dTexture node
             var place2dNode = new MFnDependencyNode();
@@ -70,7 +73,7 @@ namespace wc3ToMaya.Rendering
             place2dNode.SetPlugVal("wrapV", wrapV);
 
             // Set texture path
-            fileNode.SetPlugVal("fileTextureName", GetTexturePath(texture));
+            fileNode.SetPlugVal("fileTextureName", GetTexturePath(texture, dirName));
 
             // Change default color space settings
             foreach (var property in ColorSpaceProperties)
@@ -84,66 +87,65 @@ namespace wc3ToMaya.Rendering
 
             return (place2dNode, fileNode);
         }
-        static string GetTexturePath(string texture)
+        static string GetTexturePath(string texture, string dirName)
         {
-            // Set texture path
             string texturePath = texture.Substring(0, texture.LastIndexOf('.'));
             texturePath = texturePath.Replace("\\", "/");
 
-            if (GetAssetDirCommand.GetAssetDirectory() != string.Empty)
+            if (Directory.Exists(dirName)) // first try to find texture in 
             {
-                texturePath = $"{GetAssetDirCommand.GetAssetDirectory()}/{texturePath}";
+                foreach (string file in Directory.EnumerateFiles(dirName, "*.*", SearchOption.AllDirectories))
+                {
+                    string extension = Path.GetExtension(file);
+                    string fileName = Path.GetFileNameWithoutExtension(file);
 
-                // List of valid extensions for Maya
-                string[] validExtensions = { ".dds", ".tga", ".png", ".tif", ".tiff", ".bmp", ".jpg", ".jpeg" };
+                    if (fileName == Path.GetFileNameWithoutExtension(texturePath) && validExtensions.Contains(extension))
+                    {
+                        return file;
+                    }
+                    else if (fileName == Path.GetFileNameWithoutExtension(texturePath) && extension == ".blp")
+                    {
+                        return ConvertBLP(file);
+                    }
+                }
+            }
 
-                string foundTexturePath = null;
+            string assetDir = GetAssetDirCommand.GetAssetDirectory(); // then try to get texture from asset directory
+            if (assetDir != string.Empty && Directory.Exists(assetDir))
+            {
+                texturePath = $"{assetDir}/{texturePath}";
 
                 foreach (string ext in validExtensions)
                 {
                     string tempPath = texturePath + ext;
                     if (File.Exists(tempPath))
                     {
-                        foundTexturePath = tempPath;
-                        break;
+                        return tempPath;
                     }
                 }
 
-                if (foundTexturePath != null)
+                if (Path.GetExtension(texture) == ".blp" && File.Exists(texture))
                 {
-                    return foundTexturePath;
+                    return ConvertBLP(texture);
                 }
-                else
-                {
-                    if (Path.GetExtension(texture) == ".blp" && File.Exists(texture))
-                    {
-                        return ConvertBLP(texture, texturePath);
-                    }
-                    return texture;
-                }
+                return texture;
+
             }
             return texture;
         }
 
-        private static void ReapplyColorSpaceRules(MFnDependencyNode fileNode)
-        {
-            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.cmEnabled {fileNode.name}.colorManagementEnabled");
-            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.configFileEnabled {fileNode.name}.colorManagementConfigFileEnabled");
-            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.configFilePath {fileNode.name}.colorManagementConfigFilePath");
-            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.workingSpaceName {fileNode.name}.workingSpace");
-        }
-        static string ConvertBLP(string texture, string texturePath)
+        static string ConvertBLP(string texturePath)
         {
             string exePath = GetCLIApp.GetPath();
             if (exePath != string.Empty)
             {
                 string workingDirectory = Path.GetDirectoryName(exePath);
-                string textureNew = texturePath + ".png";
+                string textureNew = texturePath.Substring(0, texturePath.LastIndexOf('.')) + ".png";
 
                 ProcessStartInfo startInfo = new ProcessStartInfo
                 {
                     FileName = exePath,
-                    Arguments = $"-convert \"{GetAssetDirCommand.GetAssetDirectory()}/{texture}\" \"{textureNew}\"",
+                    Arguments = $"-convert \"/{texturePath}\" \"{textureNew}\"",
                     WorkingDirectory = workingDirectory
                 };
 
@@ -153,7 +155,14 @@ namespace wc3ToMaya.Rendering
 
                 return textureNew;
             }
-            return texture;
+            return texturePath;
+        }
+        private static void ReapplyColorSpaceRules(MFnDependencyNode fileNode)
+        {
+            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.cmEnabled {fileNode.name}.colorManagementEnabled");
+            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.configFileEnabled {fileNode.name}.colorManagementConfigFileEnabled");
+            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.configFilePath {fileNode.name}.colorManagementConfigFilePath");
+            MGlobal.executeCommand($"connectAttr defaultColorMgtGlobals.workingSpaceName {fileNode.name}.workingSpace");
         }
     }
 }

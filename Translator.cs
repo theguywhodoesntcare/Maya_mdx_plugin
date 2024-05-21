@@ -30,7 +30,7 @@ namespace wc3ToMaya
                     new CMdx().Load(filePath, fileStream, model);
 
                     Dictionary<INode, MFnIkJoint> nodeToJoint = Rig.CreateAndSaveData(model);
-                    Mesh.Create(model, Path.GetFileNameWithoutExtension(filePath), nodeToJoint);
+                    Mesh.Create(model, nodeToJoint, Path.GetFileNameWithoutExtension(filePath), Path.GetDirectoryName(filePath));
                     string composition = timeEditorMEL.CreateComposition(model, Path.GetFileNameWithoutExtension(filePath));
 
                     Animator.ImportSequences(model, nodeToJoint, composition);
